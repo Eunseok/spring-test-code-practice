@@ -1,7 +1,6 @@
 package com.springtestcodepractice;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GameService {
@@ -23,5 +22,11 @@ public class GameService {
 
         game.addScore(score);
         return gameRepository.save(game);
+    }
+
+    public Game findGame(Long gameId) {
+
+        return gameRepository.findById(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("게임을 찾을 수 없습니다."));
     }
 }
