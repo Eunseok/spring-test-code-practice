@@ -4,11 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class GameServiceTest {
 
     @Autowired
@@ -47,5 +49,18 @@ class GameServiceTest {
                 IllegalArgumentException.class,
                 () -> gameService.addScore(999L, 100)
         );
+    }
+
+    @Test
+    void 전체_게임_개수를_확인한다() {
+        // Given
+        gameService.createGame("game1");
+        gameService.createGame("game2");
+
+        // When
+        long count = gameRepository.count();
+
+        // Then
+        assertEquals(2, count);   // 다른 테스트가 먼저 실행됐다면 실패할 수도 있음
     }
 }
