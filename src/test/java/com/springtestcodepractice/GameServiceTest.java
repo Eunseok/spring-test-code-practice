@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
@@ -14,7 +13,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class) // "이 테스트 클래스에서 Mockito 기능(@Mock, @InjectMocks)을 쓸 수 있게 해줘"
 class GameServiceTest {
 
@@ -25,6 +23,20 @@ class GameServiceTest {
     private GameService gameService;
 
     // 리턴값 검증
+    @Test
+    void 게임을_생성한다() {
+        // Given
+        String name = "newGame";
+        given(gameRepository.save(any(Game.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));  // 넘어온 인자를 그대로 리턴
+
+        // When
+        Game result = gameService.createGame(name);
+
+        // Then
+        assertEquals(name, result.getName());
+    }
+
     @Test
     void 점수를_추가한다() {
         // Given
