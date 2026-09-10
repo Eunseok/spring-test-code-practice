@@ -1,66 +1,66 @@
 package com.springtestcodepractice;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
 @ActiveProfiles("test")
-@Transactional
+@ExtendWith(MockitoExtension.class) // "이 테스트 클래스에서 Mockito 기능(@Mock, @InjectMocks)을 쓸 수 있게 해줘"
 class GameServiceTest {
 
-    @Autowired
-    private GameService gameService;
-
-    @Autowired
+    @Mock // GameRepository의 가짜 구현체를 만들어라
     private GameRepository gameRepository;
 
-    @Test
-    void 게임을_생성한다() {
-        // When
-        Game game = gameService.createGame("newGame");
+    @InjectMocks // GameService를 생성하면서 @Mock으로 만든 가짜 객체들을 자동으로 주입해라
+    private GameService gameService;
 
-        // Then
-        assertNotNull(game.getId());
-        assertEquals("newGame", game.getName());
-        System.out.println("테스트1 실행 후 count() " + gameRepository.count());
-    }
-
+    // 리턴값 검증
     @Test
     void 점수를_추가한다() {
         // Given
-        Game game = gameService.createGame("newGame");
+        Game game = new Game("newGame");
+        given(gameRepository.findById(1L)).willReturn(Optional.of(game)); // "gameRepository.findById(1L)이 호출되면 실제로 DB를 뒤지지 말고 그냥 Optional.of(game)을 리턴해라"
+        given(gameRepository.save(any(Game.class))).willReturn(game); // "save()가 어떤 Game 객체로 호출되든 상관없이 무조건 game을 리턴해라"
 
         // When
-        Game updated = gameService.addScore(game.getId(), 100);
+        Game result = gameService.addScore(1L, 100);
 
         // Then
-        assertEquals(100, updated.getScore());
-        System.out.println("테스트1 실행 후 count() " + gameRepository.count());
+        assertEquals(100, result.getScore());
     }
 
     @Test
     void 존재하지_않는_게임에_점수를_추가하면_예외가_발생한다() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> gameService.addScore(999L, 100)
-        );
+        // given
+        given(gameRepository.findById(999L)).willReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class,
+                () -> gameService.addScore(999L, 100));
     }
 
+    // 호출 여부 검증
     @Test
-    void 전체_게임_개수를_확인한다() {
+    void 점수를_추가하면_save가_호출된다() {
         // Given
-        gameService.createGame("game1");
-        gameService.createGame("game2");
+        Game game = new Game("newGame");
+        given(gameRepository.findById(1L)).willReturn(Optional.of(game));
+        given(gameRepository.save(any(Game.class))).willReturn(game);
 
         // When
-        long count = gameRepository.count();
+        gameService.addScore(1L, 100);
 
         // Then
-        assertEquals(2, count);   // 다른 테스트가 먼저 실행됐다면 실패할 수도 있음
+        verify(gameRepository).save(game); // "gameRepository.save(game)이 실제로 호출되었는가?"
     }
 }
